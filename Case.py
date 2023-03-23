@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import requests
 import streamlit as st
 import streamlit.components.v1 as components
@@ -8,6 +9,9 @@ import branca
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
 import plotly.express as px
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
 
 #rdw dataset
 rdw = pd.read_csv('fuel_count.csv')
@@ -110,7 +114,6 @@ def add_categorical_legend(folium_map, title, colors, labels):
       """
 
     css = """
-
     <style type='text/css'>
       .maplegend {
       position: relative;
@@ -259,7 +262,53 @@ with col1:
     
     rdw['date_of_acceptance_y'] = pd.DatetimeIndex(rdw['date_of_acceptance']).year
 
-    line = px.line()
+    X = pd.date_range(start='2010-01-01', end='2022-12-01', freq='MS')
+    y = rdw['electric_count']
+
+    X_train, X_test, y_train, y_test = train_test_split(rdw.date_of_acceptance_y, y)
+
+    lr = LinearRegression()
+    lr.fit(X_train.values.reshape(-1, 1), y_train.values)
+
+    prediction = lr.predict(X_test.values.reshape(-1, 1))
+
+    years = list(range(2023, 2051))
+
+    df = pd.DataFrame(columns=['year', 'predicted_electric_count', 'predicted_non_electric_count', 'percentage'])
+    pre_electric = []
+
+    for year in years:
+        predicted = lr.predict(np.array([[year]]))[0]
+        # print(f'predicted {year} ratio: {lr.predict(np.array([[year]]))[0]}%')
+        pre_electric.append(predicted)
+        
+    df['year'] = years
+    df['predicted_electric_count'] = pre_electric
+
+    y_non = rdw['non_electric']
+    X_train, X_test, y_train, y_test = train_test_split(rdw.date_of_acceptance_y, y_non)
+
+    lr = LinearRegression()
+    lr.fit(X_train.values.reshape(-1, 1), y_train.values)
+
+    prediction = lr.predict(X_test.values.reshape(-1, 1))
+
+    pre_non_electric = []
+
+    for year in years:
+        predicted = lr.predict(np.array([[year]]))[0]
+        # print(f'predicted {year} ratio: {lr.predict(np.array([[year]]))[0]}%')
+        pre_non_electric.append(predicted)
+
+
+    df['predicted_non_electric_count'] = pre_non_electric
+
+    df['percentage'] = df['predicted_electric_count'] / (df['predicted_electric_count'] + df['predicted_non_electric_count']) * 100
+
+    prediction_plot = px.line(df, x='year', y='percentage', title='Prediction of percentage of electric vehicles vs non electric vehicles in the Netherlands', log_y=True)
+    prediction_plot.update_xaxes(patch={'title':'Time (year)'})
+    prediction_plot.update_yaxes(patch={'title':'Percentage electric vehicles of total amount'})
+    st.plotly_chart(prediction_plot, True)
 
 with col2:
     st.header('Spread of charging points and the power output')
