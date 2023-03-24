@@ -246,6 +246,22 @@ with col1:
         # Chart
     rdw['date_of_acceptance'] = rdw['date_of_acceptance'].astype('datetime64[ns]')
 
+    rdw['non_electric'] = rdw['gasoline_count'] + rdw['diesel_count'] + rdw['hydrogen_count'] + rdw['alcohol_count'] + \
+        rdw['lpg_count'] + rdw['cng_count'] + rdw['lng_count']
+    
+    rdw['ratio_electric'] = (rdw['electric_count'] / rdw['non_electric']) * 100
+
+    time_filter = rdw.loc[(rdw['date_of_acceptance'] > '2010-01-01')]
+
+    scatter = px.scatter(time_filter, x='date_of_acceptance', y='ratio_electric', trendline='ols', trendline_options=dict(log_y=True),
+                          trendline_color_override='red', title='Percentage of electric vehicles over time')
+    scatter.update_yaxes(type=type)
+    scatter.update_xaxes(patch={'title':'Time (hours)'})
+    scatter.update_yaxes(patch={'title':'Percentage electric vehicles of total amount'})
+    st.plotly_chart(scatter, True)
+    
+    rdw['date_of_acceptance'] = rdw['date_of_acceptance'].astype('datetime64[ns]')
+
     rdw['electric'] = rdw['electric_count']
 
     rdw['non_electric'] = rdw['gasoline_count'] + rdw['diesel_count'] + rdw['hydrogen_count'] + rdw['alcohol_count'] + rdw['lpg_count'] + rdw['cng_count'] + rdw['lng_count']
