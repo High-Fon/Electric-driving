@@ -256,7 +256,7 @@ with col1:
     scatter = px.scatter(time_filter, x='date_of_acceptance', y='ratio_electric', trendline='ols', trendline_options=dict(log_y=True),
                           trendline_color_override='red', title='Percentage of electric vehicles over time')
     scatter.update_yaxes(type=type)
-    scatter.update_xaxes(patch={'title':'Time (hours)'})
+    scatter.update_xaxes(patch={'title':'Date'})
     scatter.update_yaxes(patch={'title':'Percentage electric vehicles of total amount'})
     st.plotly_chart(scatter, True)
     
@@ -295,7 +295,9 @@ with col1:
     df['pre_non_electric'] = new_non_electric.tolist()
     df['percentage'] = (df['pre_electric'] / (df['pre_electric'] + df['pre_non_electric']) * 100)
     df['date'] = X_predict2
-    prediction_plot = px.line(x = df.date, y = df.percentage)
+    prediction_plot = px.line(x = df.date, y = df.percentage, title='Predicted growth of the percentage of electric vehicles over time.', labels={'y': 'Percentage of electric vehicles', 'x': 'Date'})
+    
+    st.markdown('Below is the predictive plot of the percentage of electric vehicles in relation to all vehicles. This shows that over time, it is expected that electric vehicles will become the large majority of vehicles. This has been deduced using a linear regression algorythm from Scikit learn.')
     st.plotly_chart(prediction_plot, True)
 
 with col2:
